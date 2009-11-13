@@ -16,12 +16,15 @@ PBgithub.base = "http://github.com/api/v2/json/";
 /** Load github content for this code element **/
 PBgithub.codify= function(code_elem){
 	PBgithub.c = $(code_elem);
-	$.getScript(PBgithub.make_url(PBgithub.base + 'repos/show/', "/branches", 'PBgithub.handle_branch'));
+	$.getScript(PBgithub.make_url(PBgithub.base + 'repos/show/',
+		"/branches", 'PBgithub.handle_branch'));
 }	
 
 PBgithub.make_url = function(front, end, callback){
-	var data =  "?callback=" + callback + "&login=" + PBgithub.login + "&token=" + PBgithub.token;
-	return front + PBgithub.c.attr('username') + "/" + PBgithub.c.attr('repository') + end + data;
+	var data =  "?callback=" + callback + "&login=" +
+		PBgithub.login + "&token=" + PBgithub.token;
+	return front + PBgithub.c.attr('username') + "/" +
+		PBgithub.c.attr('repository') + end + data;
 }
 
 PBgithub.handle_file = function(data){
@@ -31,7 +34,8 @@ PBgithub.handle_file = function(data){
 
 PBgithub.handle_branch = function(data){
 	var branch = data['branches'][PBgithub.c.attr('branch')];
-	$.getScript(PBgithub.make_url(PBgithub.base + 'blob/show/', "/" + branch + "/" + PBgithub.c.attr('path'), 'PBgithub.handle_file'));
+	$.getScript(PBgithub.make_url(PBgithub.base + 'blob/show/', "/"
+		+ branch + "/" + PBgithub.c.attr('path'), 'PBgithub.handle_file'));
 }
 
 PBgithub.next = function(){
