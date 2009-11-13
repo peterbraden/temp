@@ -1,0 +1,44 @@
+<html>
+	<head>
+		<script type='text/javascript' src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
+		<script type='text/javascript'>
+$(function(){
+	$('.from-github').each(function(){
+		$(this).html("Loading...");
+		
+		var user = $(this).attr('username');
+		var repo = $(this).attr('repository');
+		var filename = $(this).attr('path');
+		var commit = "8f4146d0c89fe96e6245931e56fd91f2c524e664";
+		var _this = this;
+
+		var repos_url = 'http://github.com/api/v2/json/repos/show/' + user + "/" + repo + "/branches";
+
+		var data =  "?callback=github_handle_repos&login=peterbraden&token=9d567812a941dc331cf4e431e7fc4ebc";
+
+
+
+		github_handle_repos = function(data){
+			console.log(data);
+			var repos = data;
+			var branch = data['branches'][$(_this).attr('branch')];
+			var file_url = 'http://github.com/api/v2/json/blob/show/' + user + "/" + repo + "/" + branch + "/" + filename
+			var data =  "?callback=github_handle_file&login=peterbraden&token=9d567812a941dc331cf4e431e7fc4ebc";
+			
+			github_handle_file = function(data){
+				console.log(data);
+				$(_this).html(data['blob']['data']);
+			}	
+
+			$.getScript(file_url + data);
+		}
+
+		$.getScript(repos_url + data);
+	});
+});
+		</script>
+	</head>
+	<body>
+		<code class='from-github' username='peterbraden' repository='all-that-stuff' path="file.html" branch="master"></code>
+	</body>
+</html>	
