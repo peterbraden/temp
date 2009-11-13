@@ -28,7 +28,8 @@ PBgithub.make_url = function(front, end, callback){
 }
 
 PBgithub.handle_file = function(data){
-	PBgithub.c.text(data['blob']['data']);
+	PBgithub.c.html(
+			data['blob']['data'].replace(/</g, '&lt;').replace(/>/g, '&gt;'));
 	PBgithub.next();
 }
 
