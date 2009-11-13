@@ -1,56 +1,15 @@
 <html>
 	<head>
 		<script type='text/javascript' src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
-		<script type='text/javascript'>
-			
-var PBgithub = PBgithub || {};
-
-/* You'll want to change these to your credentials */
-PBgithub.login = "peterbraden";
-PBgithub.token = "9d567812a941dc331cf4e431e7fc4ebc"
-
-/** Load github content for this code element **/
-PBgithub.codify= function(code_elem){
-	var c = $(code_elem);
-	
-	var user = c.attr('username');
-	var repo = c.attr('repository');
-	var path = c.attr('path');
-
-	var repos_url = 'http://github.com/api/v2/json/repos/show/' + user + "/" + repo + "/branches";
-
-	var data =  "?callback=github_handle_repos&login=peterbraden&token=9d567812a941dc331cf4e431e7fc4ebc";
-
-
-	github_handle_repos = function(data){
-		console.log(data);
-		var repos = data;
-		var branch = data['branches'][c.attr('branch')];
-		var file_url = 'http://github.com/api/v2/json/blob/show/' + user + "/" + repo + "/" + branch + "/" + path
-		var data =  "?callback=github_handle_file&login=peterbraden&token=9d567812a941dc331cf4e431e7fc4ebc";
-		
-		github_handle_file = function(data){
-			var file = data['blob']['data'];
-			c.text(file);
-		}	
-
-		$.getScript(file_url + data);
-	}
-
-	$.getScript(repos_url + data);
-}	
-
-
-$(function(){
-	$('code.from-github').each(function(){PBgithub.codify(this)});
-});
-		</script>
+		<script type='text/javascript' src="github-code.js"></script>
 	</head>
 	<body>
 		<pre>
-			<code class='from-github' username='peterbraden' repository='all-that-stuff' path="gihub-code.html" branch="master">
-Code available at http://github.com/peterbraden/all-that-stuff/blob/1ca083ed7890f5bc0d8b5555548a853ca2e6d420/gihub-code.html
+			<code class='from-github' username='peterbraden' repository='all-that-stuff' path="github-code.js" branch="master">
+Code available at http://github.com/peterbraden/all-that-stuff/blob/1ca083ed7890f5bc0d8b5555548a853ca2e6d420/github-code.js
 			</code>
 		</pre>	
+		
+	
 	</body>
 </html>	
