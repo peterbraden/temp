@@ -2,43 +2,55 @@
 	<head>
 		<script type='text/javascript' src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js"></script>
 		<script type='text/javascript'>
-$(function(){
-	$('.from-github').each(function(){
-		$(this).html("Loading...");
-		
-		var user = $(this).attr('username');
-		var repo = $(this).attr('repository');
-		var filename = $(this).attr('path');
-		var commit = "8f4146d0c89fe96e6245931e56fd91f2c524e664";
-		var _this = this;
-
-		var repos_url = 'http://github.com/api/v2/json/repos/show/' + user + "/" + repo + "/branches";
-
-		var data =  "?callback=github_handle_repos&login=peterbraden&token=9d567812a941dc331cf4e431e7fc4ebc";
-
-
-
-		github_handle_repos = function(data){
-			console.log(data);
-			var repos = data;
-			var branch = data['branches'][$(_this).attr('branch')];
-			var file_url = 'http://github.com/api/v2/json/blob/show/' + user + "/" + repo + "/" + branch + "/" + filename
-			var data =  "?callback=github_handle_file&login=peterbraden&token=9d567812a941dc331cf4e431e7fc4ebc";
 			
-			github_handle_file = function(data){
-				console.log(data);
-				$(_this).html(data['blob']['data']);
-			}	
+var PBgithub = PBgithub || {};
 
-			$.getScript(file_url + data);
-		}
+/* You'll want to change these to your credentials */
+PBgithub.login = "peterbraden";
+PBgithub.token = "9d567812a941dc331cf4e431e7fc4ebc"
 
-		$.getScript(repos_url + data);
-	});
+/** Load github content for this code element **/
+PBgithub.codify= function(code_elem){
+	var c = $(code_elem);
+	
+	var user = c.attr('username');
+	var repo = c.attr('repository');
+	var path = c.attr('path');
+
+	var repos_url = 'http://github.com/api/v2/json/repos/show/' + user + "/" + repo + "/branches";
+
+	var data =  "?callback=github_handle_repos&login=peterbraden&token=9d567812a941dc331cf4e431e7fc4ebc";
+
+
+	github_handle_repos = function(data){
+		console.log(data);
+		var repos = data;
+		var branch = data['branches'][c.attr('branch')];
+		var file_url = 'http://github.com/api/v2/json/blob/show/' + user + "/" + repo + "/" + branch + "/" + path
+		var data =  "?callback=github_handle_file&login=peterbraden&token=9d567812a941dc331cf4e431e7fc4ebc";
+		
+		github_handle_file = function(data){
+			var file = data['blob']['data'];
+			c.text(file);
+		}	
+
+		$.getScript(file_url + data);
+	}
+
+	$.getScript(repos_url + data);
+}	
+
+
+$(function(){
+	$('code.from-github').each(function(){PBgithub.codify(this)});
 });
 		</script>
 	</head>
 	<body>
-		<code class='from-github' username='peterbraden' repository='all-that-stuff' path="file.html" branch="master"></code>
+		<pre>
+			<code class='from-github' username='peterbraden' repository='all-that-stuff' path="gihub-code.html" branch="master">
+Code available at http://github.com/peterbraden/all-that-stuff/blob/1ca083ed7890f5bc0d8b5555548a853ca2e6d420/gihub-code.html
+			</code>
+		</pre>	
 	</body>
 </html>	
