@@ -19,6 +19,23 @@ orbits.draw.fillcircle = function(ctx, pos, rad, color){
 	ctx.fill(); 
 }
 
+orbits.draw.arc = function(ctx, pos, angle, norm, color, thickness, radius){
+	
+	radius = radius || orbits.vectorLength(orbits.vectorSubtract(norm, pos));
+	
+	var a = Math.acos(orbits.vectorDot(
+		orbits.vectorNormalise(orbits.vectorSubtract([pos[0]+10, pos[1]], pos)),
+		orbits.vectorNormalise(orbits.vectorSubtract(norm, pos))
+	));
+	a = norm[1] < pos[1] ? -a : a;
+		
+	ctx.beginPath();
+	ctx.strokeStyle = color;
+	ctx.lineWidth = thickness; 
+	ctx.arc(pos[0],pos[1], radius, a - angle/2,a + angle/2,false);
+	ctx.stroke(); 
+}
+
 orbits.ui.objs = [];
 
 orbits.gameLoop = function(screen, ctx, tdiff){
@@ -39,7 +56,9 @@ orbits.gameLoop = function(screen, ctx, tdiff){
 	});
 }
 		
-
+orbits.vectorEqual = function(v1, v2){
+	return (v1[0]== v2[0] && v1[1] == v2[1]);
+}
 orbits.vectorLength = function(vec){
 	return Math.sqrt(vec[0]*vec[0]+ vec[1]*vec[1]);
 }
@@ -55,6 +74,9 @@ orbits.vectorAdd = function(p1, p2){
 }
 orbits.vectorSubtract = function(p1, p2){
 	return [p1[0] - p2[0], p1[1] - p2[1]];
+}
+orbits.vectorDot = function(r1, r2){
+	return r1[0] * r2[0] + r1[1] * r2[1]
 }
 
 orbits.planet = function(x, y, radius, color){
@@ -92,7 +114,7 @@ orbits.moon = function(x, y, heading, radius, color){
 		$.each(orbits.objects, function(){
 			if (this != o){
 				if (this.intersects([o.x, o.y], radius)){
-					$.each(orbits.objects, function(x){if(this == o){orbits.objects.splice(x, 1);}});
+					orbits.objects.splice(orbits.objects.indexOf(o), 1)
 				}
 				grav_v = orbits.vectorAdd(grav_v, this.grav_v([o.x, o.y]));	
 			}
@@ -121,8 +143,11 @@ orbits.ui.slingshot = function(st){
 			jelem.mousedown(function(e){
 				s.start = [e.clientX, e.clientY];
 				orbits.ui.objs.push(s);
+			}).mousemove(function(e){
+				s.finish = [e.clientX, e.clientY];
 			}).mouseup(function(e){
 				var h = orbits.vectorSubtract(s.start, [e.clientX, e.clientY]);
+				orbits.ui.objs.splice(orbits.ui.objs.indexOf(s), 1);
 				orbits.objects.push(
 					orbits.moon(s.start[0], s.start[1], orbits.vectorScale(h, orbits.vectorLength(h)), 10, '#f0f')
 				);
@@ -130,7 +155,16 @@ orbits.ui.slingshot = function(st){
 		},
 		
 		draw: function(ctx){
-			orbits.draw.fillcircle(ctx, this.start, 1, '#f00');
+			if (!orbits.vectorEqual(this.start, this.finish)){
+				var l = orbits.vectorLength(orbits.vectorSubtract(this.finish, this.start));
+				for (var i = 1; i<= l; i++){
+					if (i%10==0){
+						orbits.draw.arc(ctx, this.start, 0.5, this.finish, 'rgb(255,' + parseInt((1-i/l) * 255) + ', 0)', 3, i);
+					}
+				};	
+				orbits.draw.fillcircle(ctx, this.start, 2, '#ff5');
+
+			}	
 		}
 			
 	};
