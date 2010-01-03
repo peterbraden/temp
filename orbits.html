@@ -6,7 +6,7 @@
 		</style>
 		
 		<script type="text/javascript">
-
+// Unashamedly based on http://www.bigideafun.com/penguins/arcade/spaced_penguin/info.htm
 
 var orbits = {};
 orbits.ui = {};
@@ -48,6 +48,9 @@ orbits.gameLoop = function(screen, ctx, tdiff){
 	$.each(orbits.objects, function(){
 		this.move(tdiff);
 		this.draw(ctx);	
+		if (tdiff%1000 ==0){
+			this.slow_update();
+		}
 	});	
 	
 	// UI
@@ -84,7 +87,7 @@ orbits.planet = function(x, y, radius, color){
 		x: x,
 		y: y,
 		heading: [0,0],
-		gravity: radius*radius,
+		gravity: radius*radius*10,
 		color: color,
 		draw: function(ctx){
 				orbits.draw.fillcircle(ctx, [this.x, this.y], radius, color);
@@ -102,6 +105,7 @@ orbits.planet = function(x, y, radius, color){
 		intersects: function(pos, rad){
 			return (orbits.vectorLength(orbits.vectorSubtract([this.x, this.y], pos))< radius+rad)
 		},
+		slow_update: function(){},
 	}
 }		
 
@@ -109,13 +113,12 @@ orbits.moon = function(x, y, heading, radius, color){
 	var o = orbits.planet(x, y, radius, color);
 	o.heading = heading;
 	o.gravity = 0;
+	o.check_intersects = function(){},
 	o.move = function(tdiff){
 		var grav_v = [0,0];
+		this.check_intersects();
 		$.each(orbits.objects, function(){
 			if (this != o){
-				if (this.intersects([o.x, o.y], radius)){
-					orbits.objects.splice(orbits.objects.indexOf(o), 1)
-				}
 				grav_v = orbits.vectorAdd(grav_v, this.grav_v([o.x, o.y]));	
 			}
 		});
@@ -131,31 +134,73 @@ orbits.moon = function(x, y, heading, radius, color){
 	return o;
 }
 
+orbits.spaceship = function(x, y, heading, radius, color){
+	var s = orbits.moon(x, y, heading, radius, color);
+	var old_move = s.move;
+	s.time_alive =0;
+	s.check_intersects = function(){
+		$.each(orbits.objects, function(){
+			if (this != s && this.intersects([s.x, s.y], radius)){
+				orbits.objects.splice(orbits.objects.indexOf(s), 1)
+				if (this.target){
+					//Success
+					$('#score').text('Success:' + s.time_alive);	
+				}else{
+					$('#score').text(0);
+				}
+			}
+		});
+	},
+	
+	s.move = function(tdiff){
+		s.time_alive += tdiff;
+		old_move.call(s, tdiff);
+	}
+	
+	s.slow_update = function(){
+		$('#score').text(this.time_alive);
+	}
+	return s;
+	
+}
+
+orbits.target = function(x, y){
+	var t = orbits.planet(x, y, 6, '#44f');
+	t.target = true;
+	return t;
+}
 
 
 orbits.ui.slingshot = function(st){
-	
+	var spaceship, visible;
 	s = {
 		start:st,
 		finish:st,
 		
 		bind : function(jelem){
 			jelem.mousedown(function(e){
-				s.start = [e.clientX, e.clientY];
-				orbits.ui.objs.push(s);
+				if (orbits.objects.indexOf(spaceship) >=0){
+					// Clear old spaceship
+					orbits.objects.splice(orbits.objects.indexOf(spaceship),1);
+				}
+				visible = true;	
+				//s.start = [e.clientX, e.clientY];
+				
 			}).mousemove(function(e){
 				s.finish = [e.clientX, e.clientY];
 			}).mouseup(function(e){
+				visible = false;
 				var h = orbits.vectorSubtract(s.start, [e.clientX, e.clientY]);
-				orbits.ui.objs.splice(orbits.ui.objs.indexOf(s), 1);
-				orbits.objects.push(
-					orbits.moon(s.start[0], s.start[1], orbits.vectorScale(h, orbits.vectorLength(h)), 10, '#f0f')
-				);
+				spaceship = orbits.spaceship(s.start[0], s.start[1], orbits.vectorScale(h, orbits.vectorLength(h)), 5, '#f0f');
+				orbits.objects.push(spaceship);
 			});	
 		},
 		
 		draw: function(ctx){
-			if (!orbits.vectorEqual(this.start, this.finish)){
+			//if ((!spaceship) || orbits.objects.indexOf(spaceship) < 0){
+				orbits.draw.fillcircle(ctx, this.start, 2, '#ff5');
+			//}
+			if (visible && !orbits.vectorEqual(this.start, this.finish)){
 				var l = orbits.vectorLength(orbits.vectorSubtract(this.finish, this.start));
 				for (var i = 1; i<= l; i++){
 					if (i%10==0){
@@ -168,6 +213,7 @@ orbits.ui.slingshot = function(st){
 		}
 			
 	};
+	orbits.ui.objs.push(s);
 	return s	
 }		
 		
@@ -176,9 +222,9 @@ $(function(){
 	var ctx = screen.getContext('2d');
 
 	orbits.objects = [
-		orbits.planet(100.0,250.0,50.0,'#999'),
-		orbits.planet(300.0,250.0,50.0,'#999'),
-
+		orbits.planet(100.0,250.0,30.0,'#999'),
+		orbits.planet(300.0,250.0,30.0,'#999'),
+		orbits.target(200, 100),
 		//orbits.moon(50.0, 50.0, [15000,-40], 10.0, '#f00'),
 	];
 
@@ -188,7 +234,7 @@ $(function(){
 			orbits.gameLoop(screen, ctx, 1000);
 		}, 10);
 	
-	var ss = orbits.ui.slingshot([-10, -10])
+	var ss = orbits.ui.slingshot([400, 400])
 	ss.bind($(screen));
 });	
 
@@ -197,6 +243,7 @@ $(function(){
 
 	</head>
 	<body>
-		<canvas width = '500' height='500' id = 'orbits' />
+		<canvas width = '500' height='500' id = 'orbits' ></canvas>
+		<p id='score'>0</p>
 	</body>
 </html>	
